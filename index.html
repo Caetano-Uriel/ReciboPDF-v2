@@ -16,72 +16,78 @@
   </head>
   <body>
     <a class="skip-link" href="#cliente">Ir para o preenchimento</a>
-    <aside class="sidebar no-print" aria-label="Identidade da ferramenta">
-      <a class="brand" href="./" aria-label="Info Projekt — início"
-        ><img src="info.png" alt="Info Projekt" width="148" height="92"
-      /></a>
-      <div class="sidebar-label">ESPAÇO DE TRABALHO</div>
-      <div class="nav-active">
-        <span aria-hidden="true">▤</span> Recibos <span class="nav-dot"></span>
-      </div>
-      <div class="sidebar-note">
-        <div class="note-icon" aria-hidden="true">↗</div>
-        <strong>Menos papelada.<br />Mais praticidade.</strong>
-        <p>Do preenchimento ao recibo, tudo em um só lugar.</p>
-      </div>
-      <div class="sidebar-footer">
-        <span class="status-dot"></span> Feito para o seu dia a dia<span
-          class="version"
-          >INFO PROJEKT · RECIBOS</span
-        >
-      </div>
-    </aside>
 
     <main class="workspace">
       <header class="topbar no-print">
-        <div class="breadcrumb">
-          Ferramentas <span>/</span> <strong>Recibos</strong>
+        <div class="header-brand">
+          <img src="info.png" alt="Info Projekt" width="112" height="64" />
+          <div>
+            <strong>Info Projekt</strong><span>Recibos de pagamento</span>
+          </div>
         </div>
-        <div class="topbar-right">
-          <span class="local-badge"
-            ><span class="status-dot"></span> Preenchimento local</span
-          ><span class="avatar" aria-hidden="true">IP</span>
+        <div
+          class="reading-controls"
+          role="group"
+          aria-label="Tamanho do texto"
+        >
+          <span>Tamanho do texto</span>
+          <div>
+            <button type="button" id="normalText" aria-pressed="true">
+              Padrão</button
+            ><button type="button" id="largeText" aria-pressed="false">
+              Maior
+            </button>
+          </div>
         </div>
       </header>
       <div class="page-heading no-print">
         <div>
-          <p class="eyebrow">SIMPLES, DO COMEÇO AO FIM</p>
-          <h1>Um novo recibo.</h1>
+          <p class="eyebrow">Versão 2 · em avaliação</p>
+          <h1>Criar recibo de pagamento</h1>
           <p class="subtitle">
-            Preencha os dados. Confira a prévia. Pronto para entregar.
+            Preencha os dados e confira o recibo antes de imprimir.
           </p>
         </div>
         <button type="button" class="button button-secondary" id="newReceipt">
-          <span aria-hidden="true">＋</span> Novo recibo
+          <span aria-hidden="true">＋</span> Começar outro recibo
         </button>
       </div>
-      <div class="mobile-tabs no-print" role="group" aria-label="Visualização">
+      <nav class="mobile-tabs no-print" aria-label="Etapas do recibo">
         <button type="button" class="selected" id="editTab" aria-pressed="true">
-          Preencher</button
-        ><button type="button" id="previewTab" aria-pressed="false">
-          Ver recibo
+          <span class="tab-number" aria-hidden="true">1</span> Preencher dados
         </button>
-      </div>
+        <button type="button" id="previewTab" aria-pressed="false">
+          <span class="tab-number" aria-hidden="true">2</span> Conferir e
+          imprimir
+        </button>
+      </nav>
       <div class="editor-layout">
         <section class="editor no-print" aria-label="Preenchimento do recibo">
           <form id="receiptForm" novalidate>
+            <div class="error-summary" id="errorSummary" role="alert" hidden>
+              <strong>Confira os campos destacados.</strong>
+              <p>Alguns dados estão faltando ou precisam ser corrigidos.</p>
+              <button type="button" id="firstError" class="text-button">
+                Ir para o primeiro campo
+              </button>
+            </div>
+            <p class="form-instruction">
+              Os campos com <strong>(obrigatório)</strong> precisam ser
+              preenchidos.
+            </p>
             <section class="card">
               <div class="section-heading">
                 <span class="step-number">01</span>
                 <div>
                   <h2>Dados do recibo</h2>
-                  <p>Quem pagou e quando o pagamento aconteceu.</p>
+                  <p>Informe o cliente e a data do pagamento.</p>
                 </div>
               </div>
               <div class="field-grid">
                 <div class="field">
                   <label for="date"
-                    >Data do pagamento <span class="required">*</span></label
+                    >Data do pagamento
+                    <span class="required">(obrigatório)</span></label
                   ><input id="date" name="date" type="date" required /><span
                     class="field-error"
                     id="dateError"
@@ -89,7 +95,7 @@
                 </div>
                 <div class="field">
                   <label for="reference"
-                    >Referência <span class="optional">opcional</span></label
+                    >Referência <span class="optional">(opcional)</span></label
                   ><input
                     id="reference"
                     name="reference"
@@ -102,7 +108,8 @@
               </div>
               <div class="field">
                 <label for="cliente"
-                  >Nome do cliente <span class="required">*</span></label
+                  >Nome do cliente
+                  <span class="required">(obrigatório)</span></label
                 ><input
                   id="cliente"
                   name="client"
@@ -114,7 +121,7 @@
               </div>
               <div class="field">
                 <label for="address"
-                  >Endereço <span class="optional">opcional</span></label
+                  >Endereço <span class="optional">(opcional)</span></label
                 ><textarea
                   id="address"
                   name="address"
@@ -133,10 +140,6 @@
                   <p>Adicione o que está sendo pago.</p>
                 </div>
                 <span class="count-badge" id="itemCount">1 item</span>
-              </div>
-              <div class="items-heading" aria-hidden="true">
-                <span>DESCRIÇÃO</span><span>QTD.</span><span>VALOR UNIT.</span
-                ><span></span>
               </div>
               <div id="items"></div>
               <p class="field-error" id="itemsError" role="status"></p>
@@ -174,15 +177,24 @@
                     value="full"
                     checked
                   />
-                  <span>Pagamento integral</span></label
+                  <span
+                    >Recebi o valor total<small
+                      >O cliente pagou tudo.</small
+                    ></span
+                  ></label
                 ><label
                   ><input type="radio" name="paymentType" value="partial" />
-                  <span>Pagamento parcial</span></label
+                  <span
+                    >Recebi parte do valor<small
+                      >Ainda ficou um saldo a pagar.</small
+                    ></span
+                  ></label
                 >
               </fieldset>
               <div class="field" id="receivedField" hidden>
                 <label for="received"
-                  >Valor recebido <span class="required">*</span></label
+                  >Valor recebido
+                  <span class="required">(obrigatório)</span></label
                 >
                 <div class="currency-input">
                   <span>R$</span
@@ -199,7 +211,8 @@
               </div>
               <div class="field">
                 <label for="paymentMethod"
-                  >Forma de pagamento <span class="required">*</span></label
+                  >Forma de pagamento
+                  <span class="required">(obrigatório)</span></label
                 ><select id="paymentMethod" name="paymentMethod" required>
                   <option value="">Selecione uma forma de pagamento</option>
                   <option value="Pix">Pix</option>
@@ -231,9 +244,9 @@
                 <span class="step-number">04</span>
                 <div>
                   <h2>Observações</h2>
-                  <p>Um detalhe a mais, se precisar.</p>
+                  <p>Inclua detalhes do pagamento, se necessário.</p>
                 </div>
-                <span class="optional">opcional</span>
+                <span class="optional">(opcional)</span>
               </div>
               <label class="sr-only" for="notes">Observações e negociação</label
               ><textarea
@@ -245,7 +258,7 @@
               ></textarea>
               <div class="field receiver-field">
                 <label for="receiver"
-                  >Recebido por <span class="optional">opcional</span></label
+                  >Recebido por <span class="optional">(opcional)</span></label
                 ><input
                   id="receiver"
                   name="receiver"
@@ -257,8 +270,9 @@
             <div class="draft-option">
               <label
                 ><input id="saveDraft" type="checkbox" /><span
-                  >Salvar rascunho neste navegador<small
-                    >Ative se este computador for de uso pessoal.</small
+                  >Guardar preenchimento neste computador<small
+                    >Você pode continuar depois. Evite usar em computador
+                    compartilhado.</small
                   ></span
                 ></label
               ><button
@@ -267,7 +281,7 @@
                 id="forgetDraft"
                 hidden
               >
-                Apagar rascunho
+                Apagar preenchimento salvo
               </button>
             </div>
             <p
@@ -277,15 +291,27 @@
               aria-live="polite"
             ></p>
           </form>
+          <div class="editor-actions">
+            <div>
+              <span>Total dos itens</span><strong id="footerTotal">—</strong>
+            </div>
+            <button
+              type="button"
+              id="reviewReceipt"
+              class="button button-primary"
+            >
+              Conferir recibo <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </section>
 
         <section class="preview-panel" aria-label="Prévia do recibo">
           <div class="preview-toolbar no-print">
             <div>
               <span class="preview-dot"></span>
-              <h2>Prévia do recibo</h2>
+              <h2 id="previewHeading" tabindex="-1">Confira o recibo</h2>
             </div>
-            <span>A4 · atualizado ao preencher</span>
+            <span>Confira o cliente, os itens e o valor recebido.</span>
           </div>
           <div class="paper-wrap">
             <article
@@ -392,11 +418,18 @@
             <div class="action-buttons">
               <button
                 type="button"
+                id="backToEdit"
+                class="button button-secondary"
+              >
+                ← Voltar para corrigir
+              </button>
+              <button
+                type="button"
                 id="duplicateReceipt"
                 class="button button-secondary"
                 title="Manter os dados e começar uma cópia"
               >
-                Duplicar</button
+                Fazer uma cópia</button
               ><button
                 type="button"
                 id="printReceipt"
@@ -414,7 +447,7 @@
                   <path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z" />
                   <path d="M17 12h1" />
                 </svg>
-                Imprimir / salvar PDF
+                Imprimir ou salvar PDF
               </button>
             </div>
             <p class="pdf-hint">
@@ -424,7 +457,9 @@
         </section>
       </div>
       <footer class="workspace-footer no-print">
-        Uma tarefa a menos. Um atendimento melhor.<span>Info Projekt</span>
+        Preencha. Confira. Imprima.<span
+          >Info Projekt · versão em avaliação</span
+        >
       </footer>
     </main>
     <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>

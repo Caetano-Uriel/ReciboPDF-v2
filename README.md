@@ -9,17 +9,23 @@ Gerador de recibos de pagamento em HTML, CSS e JavaScript. Funciona como site es
 1. Preencha a data e o nome do cliente. Endereço e referência são opcionais.
 2. Adicione os serviços ou produtos, com quantidade inteira e preço unitário. Valores como `79,90`, `1.299,90` e `1299.90` são aceitos.
 3. Selecione pagamento integral ou parcial e a forma de pagamento. No pagamento misto, a soma das formas precisa ser igual ao valor recebido.
-4. Confira a prévia e clique em **Imprimir / salvar PDF**. No diálogo do navegador, escolha uma impressora ou **Salvar como PDF**.
+4. Clique em **Conferir recibo**. Na segunda etapa, confira os dados e clique em **Imprimir ou salvar PDF**. No diálogo do navegador, escolha uma impressora ou **Salvar como PDF**.
 
 A referência é manual: use o número do recibo, OS ou contrato do seu controle interno. O site não gera numeração compartilhada nem confirma pagamentos em bancos ou sistemas externos.
+
+## Leitura e navegação
+
+O preenchimento e a conferência ficam em duas etapas, disponíveis em qualquer tamanho de tela. O formulário usa fonte Arial de 18 px como base, campos de pelo menos 56 px, rótulos visíveis e mensagens de erro persistentes. O controle **Tamanho do texto → Maior** aumenta a base para 21 px e guarda apenas essa preferência no navegador. Alterar o tamanho não apaga o preenchimento nem muda o tamanho da impressão.
+
+Os textos principais usam contraste de aproximadamente 15:1 sobre branco; textos de apoio, 7,6:1. São medidas das cores usadas, não uma certificação de acessibilidade. A navegação por teclado tem foco visível. O envio do formulário leva à conferência, e a impressão precisa ser solicitada pelo botão próprio.
 
 ## Rascunho e privacidade
 
 Os dados preenchidos ficam na página. Não há API, analytics ou envio automático dos campos para um servidor. O carregamento inicial do site utiliza normalmente a hospedagem GitHub Pages.
 
-**Salvar rascunho neste navegador** é opcional e vem desativado. Quando ativado, usa `localStorage` neste navegador e dispositivo; os dados permanecem até serem apagados. Não é histórico, backup nem sincronização entre computadores. Evite ativar em computadores compartilhados.
+**Guardar preenchimento neste computador** é opcional e vem desativado. Quando ativado, usa `localStorage` neste navegador e dispositivo; os dados permanecem até serem apagados. Não é histórico, backup nem sincronização entre computadores. Evite ativar em computadores compartilhados.
 
-**Apagar rascunho** remove a cópia salva e mantém os campos na aba atual. **Novo recibo** apaga também o preenchimento após confirmação. Uma cópia mantém os dados, atualiza a data e limpa a referência; confira tudo antes de emitir novamente.
+**Apagar preenchimento salvo** remove a cópia salva e mantém os campos na aba atual. **Começar outro recibo** apaga também o preenchimento após confirmação. Uma cópia mantém os dados, atualiza a data e limpa a referência; confira tudo antes de emitir novamente.
 
 ## Impressão
 

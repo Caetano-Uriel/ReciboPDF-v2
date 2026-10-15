@@ -54,12 +54,11 @@
     const row = document.createElement("div");
     row.className = "item-row";
     row.dataset.id = id;
-    row.innerHTML = `<div class="item-fields">
-      <div class="item-description"><label class="sr-only" for="description-${id}">Descrição do item ${id}</label><input id="description-${id}" class="item-desc" maxlength="500" placeholder="Ex.: Mensalidade de internet" list="serviceSuggestions" autocomplete="off" required aria-describedby="item-error-${id}"></div>
-      <div class="item-quantity"><label class="item-mobile-label" for="quantity-${id}"><span class="sr-only">Item ${id}: </span>Quantidade</label><input id="quantity-${id}" class="item-qty" type="number" inputmode="numeric" min="1" max="99999" step="1" required aria-describedby="item-error-${id}"></div>
-      <div class="item-price"><label class="item-mobile-label" for="unit-${id}"><span class="sr-only">Item ${id}: </span>Valor unitário</label><input id="unit-${id}" class="item-unit" inputmode="decimal" maxlength="20" placeholder="0,00" required aria-describedby="item-error-${id}"></div>
-      <button type="button" class="remove-button remove-item" aria-label="Excluir item ${id}">${trashIcon()}</button>
-      </div><div class="item-subtotal"><span class="field-error" id="item-error-${id}"></span><strong class="line-total">—</strong></div>`;
+    row.innerHTML = `<div class="item-row-heading"><h3 class="item-row-title">Item</h3><button type="button" class="remove-button remove-item" aria-label="Excluir item">${trashIcon()}<span>Excluir item</span></button></div><div class="item-fields">
+      <div class="item-description"><label class="item-label" for="description-${id}">Descrição do serviço ou produto <span class="required">(obrigatório)</span></label><input id="description-${id}" class="item-desc" maxlength="500" placeholder="Ex.: Mensalidade de internet" list="serviceSuggestions" autocomplete="off" required aria-describedby="item-error-${id}"></div>
+      <div class="item-quantity"><label class="item-label" for="quantity-${id}">Quantidade</label><input id="quantity-${id}" class="item-qty" type="number" inputmode="numeric" min="1" max="99999" step="1" required aria-describedby="item-error-${id}"></div>
+      <div class="item-price"><label class="item-label" for="unit-${id}">Valor de cada item (R$)</label><input id="unit-${id}" class="item-unit" inputmode="decimal" maxlength="20" placeholder="Ex.: 79,90" required aria-describedby="item-error-${id}"></div>
+      </div><p class="field-error" id="item-error-${id}"></p><div class="item-subtotal"><span>Subtotal deste item</span><strong class="line-total">—</strong></div>`;
     row.querySelector(".item-desc").value = data.description || "";
     row.querySelector(".item-qty").value = data.quantity ?? "1";
     row.querySelector(".item-unit").value = data.unit || "";
@@ -74,7 +73,7 @@
     const id = ++counter;
     const row = document.createElement("div");
     row.className = "mixed-row";
-    row.innerHTML = `<label class="sr-only" for="method-${id}">Forma da parcela ${id}</label><select id="method-${id}" class="mixed-method" aria-describedby="mixedError"></select><label class="sr-only" for="amount-${id}">Valor da parcela ${id}</label><input id="amount-${id}" class="mixed-amount" inputmode="decimal" maxlength="20" placeholder="0,00" aria-describedby="mixedError"><button type="button" class="remove-button remove-payment" aria-label="Excluir forma de pagamento">${trashIcon()}</button>`;
+    row.innerHTML = `<div><label for="method-${id}">Forma de pagamento</label><select id="method-${id}" class="mixed-method" aria-describedby="mixedError"></select></div><div><label for="amount-${id}">Valor recebido (R$)</label><input id="amount-${id}" class="mixed-amount" inputmode="decimal" maxlength="20" placeholder="Ex.: 50,00" aria-describedby="mixedError"></div><button type="button" class="remove-button remove-payment" aria-label="Excluir forma de pagamento">${trashIcon()}<span>Excluir esta forma</span></button>`;
     const select = row.querySelector("select");
     for (const method of METHODS) {
       const option = document.createElement("option");
@@ -144,10 +143,10 @@
     error(
       $("received"),
       $("receivedError"),
-      payment.receivedValid
+      state.paymentType !== "partial" || payment.receivedValid
         ? ""
         : "Informe um valor maior que zero e menor que o total dos itens.",
-      isTouched($("received")),
+      state.paymentType === "partial" && isTouched($("received")),
     );
     Array.from($("items").children).forEach((row, index) => {
       const item = state.items[index],
@@ -225,12 +224,17 @@
     $("itemCount").textContent =
       `${state.items.length} ${state.items.length === 1 ? "item" : "itens"}`;
     Array.from($("items").children).forEach((row, i) => {
+      row.querySelector(".item-row-title").textContent = `Item ${i + 1}`;
+      row
+        .querySelector(".remove-item")
+        .setAttribute("aria-label", `Excluir item ${i + 1}`);
       row.querySelector(".line-total").textContent =
         calc.lines[i].amount === null
           ? "—"
           : M.formatMoney(calc.lines[i].amount);
     });
     $("editorTotal").textContent = totalSafe;
+    $("footerTotal").textContent = totalSafe;
     $("previewTotal").textContent = totalSafe;
     $("previewReceived").textContent = receivedSafe;
     $("previewDate").textContent = displayDate(state.date);
@@ -307,6 +311,7 @@
     $("readyState").append(icon, text);
     $("addItem").disabled = state.items.length >= 100;
     $("addPayment").disabled = state.payments.length >= 5;
+    $("errorSummary").hidden = !attempted || valid;
     return { state, valid };
   }
   function saveDraft() {
@@ -353,6 +358,48 @@
     $("previewTab").classList.toggle("selected", preview);
     $("editTab").setAttribute("aria-pressed", String(!preview));
     $("previewTab").setAttribute("aria-pressed", String(preview));
+    const target = preview ? $("previewHeading") : $("editTab");
+    target.focus({ preventScroll: true });
+    if (typeof target.scrollIntoView === "function")
+      target.scrollIntoView({ block: "start" });
+  }
+  function focusFirstError() {
+    const invalid = document.querySelector(
+      'input[aria-invalid="true"]:not(:disabled),select[aria-invalid="true"],textarea[aria-invalid="true"]',
+    );
+    const target =
+      invalid || document.querySelector(".item-unit") || $("cliente");
+    target.focus({ preventScroll: true });
+    if (typeof target.scrollIntoView === "function")
+      target.scrollIntoView({ block: "center" });
+  }
+  function reviewReceipt() {
+    attempted = true;
+    const { valid } = render();
+    if (!valid) {
+      setView(false);
+      focusFirstError();
+      toast(
+        "Confira os campos destacados. Seu preenchimento continua salvo na tela.",
+      );
+      return;
+    }
+    setView(true);
+  }
+  function setTextSize(large, persist = true) {
+    document.documentElement.classList.toggle("large-text", large);
+    $("normalText").setAttribute("aria-pressed", String(!large));
+    $("largeText").setAttribute("aria-pressed", String(large));
+    if (persist) {
+      try {
+        localStorage.setItem(
+          "info-projekt.text-size",
+          large ? "large" : "normal",
+        );
+      } catch {
+        /* Readability still works when storage is unavailable. */
+      }
+    }
   }
   function reset() {
     clearTimeout(saveTimer);
@@ -442,9 +489,22 @@
 
   reset();
   restoreDraft();
+  try {
+    setTextSize(
+      localStorage.getItem("info-projekt.text-size") === "large",
+      false,
+    );
+  } catch {
+    setTextSize(false, false);
+  }
+  $("normalText").addEventListener("click", () => setTextSize(false));
+  $("largeText").addEventListener("click", () => setTextSize(true));
+  $("reviewReceipt").addEventListener("click", reviewReceipt);
+  $("firstError").addEventListener("click", focusFirstError);
+  $("backToEdit").addEventListener("click", () => setView(false));
   $("receiptForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    $("printReceipt").click();
+    reviewReceipt();
   });
   $("receiptForm").addEventListener("input", (event) => {
     if (event.target.id !== "saveDraft") changed();
@@ -539,14 +599,13 @@
     toast("Cópia iniciada. Informe uma nova referência, se necessário.");
   });
   $("editTab").addEventListener("click", () => setView(false));
-  $("previewTab").addEventListener("click", () => setView(true));
+  $("previewTab").addEventListener("click", reviewReceipt);
   $("printReceipt").addEventListener("click", () => {
     attempted = true;
     const { valid } = render();
     if (!valid) {
       setView(false);
-      const invalid = document.querySelector('[aria-invalid="true"]');
-      if (invalid) invalid.focus();
+      focusFirstError();
       toast("Revise os campos destacados antes de emitir o recibo.");
       return;
     }

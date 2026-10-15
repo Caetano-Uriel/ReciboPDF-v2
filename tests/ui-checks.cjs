@@ -6,11 +6,11 @@ const path =
   require("node:path").join(__dirname, "..") + require("node:path").sep;
 const html = fs.readFileSync(path + "index.html", "utf8");
 const errors = [];
-function create(saved) {
+function create(saved, textSize) {
   const virtualConsole = new VirtualConsole();
   virtualConsole.on("jsdomError", (error) => errors.push(error.message));
   const dom = new JSDOM(html, {
-    url: "https://caetano-uriel.github.io/ReciboPDF/",
+    url: "https://caetano-uriel.github.io/ReciboPDF-v2/",
     runScripts: "outside-only",
     pretendToBeVisual: true,
     virtualConsole,
@@ -24,6 +24,7 @@ function create(saved) {
   };
   w.confirm = () => true;
   if (saved) w.localStorage.setItem("info-projekt.receipt.v2", saved);
+  if (textSize) w.localStorage.setItem("info-projekt.text-size", textSize);
   w.eval(fs.readFileSync(path + "money.js", "utf8"));
   w.eval(fs.readFileSync(path + "script.js", "utf8"));
   return { dom, w, d: w.document, prints: () => prints };
@@ -202,6 +203,70 @@ check("all editable controls have associated labels", () => {
   for (const input of d.querySelectorAll("input,textarea,select"))
     assert.ok(input.labels.length > 0, input.id);
 });
+check(
+  "review guides corrections and never prints automatically on form submit",
+  () => {
+    const flow = create();
+    const byId = (id) => flow.d.getElementById(id);
+    const input = (element, value) => {
+      element.value = value;
+      element.dispatchEvent(new flow.w.Event("input", { bubbles: true }));
+    };
+    byId("reviewReceipt").click();
+    assert.equal(byId("errorSummary").hidden, false);
+    assert.equal(flow.d.body.classList.contains("preview-mode"), false);
+    assert.equal(flow.d.activeElement, byId("cliente"));
+    input(byId("cliente"), "Teste de conferência");
+    input(flow.d.querySelector(".item-desc"), "Mensalidade");
+    input(flow.d.querySelector(".item-unit"), "99,90");
+    input(byId("paymentMethod"), "Pix");
+    byId("receiptForm").dispatchEvent(
+      new flow.w.Event("submit", { bubbles: true, cancelable: true }),
+    );
+    assert.equal(flow.prints(), 0);
+    assert.equal(flow.d.body.classList.contains("preview-mode"), true);
+    assert.equal(flow.d.activeElement, byId("previewHeading"));
+    assert.equal(byId("errorSummary").hidden, true);
+    byId("backToEdit").click();
+    assert.equal(flow.d.body.classList.contains("preview-mode"), false);
+    assert.equal(byId("cliente").value, "Teste de conferência");
+    flow.dom.window.close();
+  },
+);
+check(
+  "text size can change without losing work and is retained for the next visit",
+  () => {
+    const flow = create();
+    const byId = (id) => flow.d.getElementById(id);
+    byId("cliente").value = "Nome preservado";
+    byId("largeText").click();
+    assert.equal(flow.d.documentElement.classList.contains("large-text"), true);
+    assert.equal(byId("largeText").getAttribute("aria-pressed"), "true");
+    assert.equal(byId("normalText").getAttribute("aria-pressed"), "false");
+    assert.equal(byId("cliente").value, "Nome preservado");
+    assert.equal(flow.w.localStorage.getItem("info-projekt.receipt.v2"), null);
+    const nextVisit = create(
+      undefined,
+      flow.w.localStorage.getItem("info-projekt.text-size"),
+    );
+    assert.equal(
+      nextVisit.d.documentElement.classList.contains("large-text"),
+      true,
+    );
+    nextVisit.d.getElementById("newReceipt").click();
+    assert.equal(
+      nextVisit.d.documentElement.classList.contains("large-text"),
+      true,
+    );
+    nextVisit.d.getElementById("normalText").click();
+    assert.equal(
+      nextVisit.d.documentElement.classList.contains("large-text"),
+      false,
+    );
+    flow.dom.window.close();
+    nextVisit.dom.window.close();
+  },
+);
 assert.deepEqual(errors, []);
 console.log(`${checks} integration checks passed; no runtime errors.`);
 env.dom.window.close();
